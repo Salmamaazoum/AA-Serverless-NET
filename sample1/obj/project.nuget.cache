@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "U/LhrSbR6LA=",
+  "dgSpecHash": "fH/EOgzBf2Y=",
   "success": true,
   "projectFilePath": "/workspaces/AA-Serverless-NET/sample1/sample1.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "/home/vscode/.nuget/packages/newtonsoft.json/13.0.4/newtonsoft.json.13.0.4.nupkg.sha512"
+  ],
   "logs": []
 }

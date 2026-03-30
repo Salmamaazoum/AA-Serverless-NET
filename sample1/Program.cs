@@ -1,4 +1,5 @@
 ﻿namespace sample1;
+using Newtonsoft.Json;
 
 public class Personne
 {
@@ -25,6 +26,8 @@ class Program
             age = 25
         };
 
-        Console.WriteLine(p.Hello(true));
+        string json = JsonConvert.SerializeObject(p, Formatting.Indented);
+
+        Console.WriteLine(json);
     }
 }
