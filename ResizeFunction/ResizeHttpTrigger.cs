@@ -17,35 +17,47 @@ public class ResizeHttpTrigger
     }
 
     [Function("ResizeHttpTrigger")]
-    public async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req)
+public async Task<IActionResult> Run(
+    [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req)
+{
+    _logger.LogInformation("ResizeHttpTrigger function received a request.");
+
+    if (!int.TryParse(req.Query["w"], out int w) ||
+        !int.TryParse(req.Query["h"], out int h) ||
+        w <= 0 || h <= 0)
     {
-        _logger.LogInformation("ResizeHttpTrigger function received a request.");
+        return new BadRequestObjectResult("Invalid parameters w or h.");
+    }
 
-        if (!int.TryParse(req.Query["w"], out int w) || !int.TryParse(req.Query["h"], out int h))
-        {
-            return new BadRequestObjectResult("Invalid or missing parameters w and h.");
-        }
+    try
+    {
+        using var msInput = new MemoryStream();
+        await req.Body.CopyToAsync(msInput);
 
-        byte[] targetImageBytes;
+        if (msInput.Length == 0)
+            return new BadRequestObjectResult("Request body is empty.");
 
-        using (var msInput = new MemoryStream())
-        {
-            await req.Body.CopyToAsync(msInput);
-            msInput.Position = 0;
+        msInput.Position = 0;
 
-            using (var image = Image.Load(msInput))
-            {
-                image.Mutate(x => x.Resize(w, h));
+        using var image = Image.Load(msInput);
 
-                using (var msOutput = new MemoryStream())
-                {
-                    image.SaveAsJpeg(msOutput);
-                    targetImageBytes = msOutput.ToArray();
-                }
-            }
-        }
+        image.Mutate(x => x.Resize(w, h));
+
+        using var msOutput = new MemoryStream();
+        image.SaveAsJpeg(msOutput);
+
+        byte[] targetImageBytes = msOutput.ToArray();
 
         return new FileContentResult(targetImageBytes, "image/jpeg");
     }
+    catch (UnknownImageFormatException)
+    {
+        return new BadRequestObjectResult("Invalid image format.");
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Unexpected error.");
+        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+    }
+}
 }
